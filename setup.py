@@ -35,7 +35,8 @@ def get_requires() -> List[str]:
 
 
 def get_console_scripts() -> List[str]:
-    console_scripts = ["llamafactory-cli = llamafactory.cli:main"]
+    # get_console_scripts() 函数返回一个包含命令行工具定义的列表。
+    console_scripts = ["llamafactory-cli = llamafactory.cli:main"]  # src/llamafactory/cli.py/main。llamafactory-cli=llamafactory.cli:main 表示定义一个名为 llamafactory-cli 的命令行工具，当运行这个命令时，会调用 llamafactory.cli 模块中的 main 函数。
     if os.environ.get("ENABLE_SHORT_CONSOLE", "1").lower() in ["true", "1"]:
         console_scripts.append("lmf = llamafactory.cli:main")
 

@@ -73,6 +73,49 @@ class Command(str, Enum):
     HELP = "help"
 
 
+"""
+1 - sys.argv是 Python 标准库 sys 模块中的一个列表，它包含了命令行参数。即使 main 函数没有显式地传递参数，sys.argv 仍然可以访问到命令行参数，因为它是全局的。
+llamafactory-cli train examples/train_lora/llama3_lora_sft.yaml时sys.argv 列表会自动填充内容：['llamafactory-cli', 'train', 'examples/train_lora/llama3_lora_sft.yaml']
+sys.argv[0] 是脚本的名称，即 'llamafactory-cli'。
+sys.argv[1] 是第一个参数，即 'train'。
+sys.argv[2] 是第二个参数，即 'examples/train_lora/llama3_lora_sft.yaml'。
+sys.argv.pop(1) 会移除并返回第二个元素 'train'，将其赋值给 command 变量。此时 sys.argv 列表变为：['llamafactory-cli', 'examples/train_lora/llama3_lora_sft.yaml']。
+
+2 - 检查环境变量 FORCE_TORCHRUN 是否设置为 true 或 1，或者设备数量是否大于 1。如果满足条件，则进行分布式训练初始化：
+在分布式训练的情况下，torchrun 命令会将 sys.argv[1:] 作为参数传递给启动脚本。此时 sys.argv[1:] 为 ['examples/train_lora/llama3_lora_sft.yaml']。
+在单机训练的情况下，run_exp() 函数会直接使用 sys.argv 中的参数。
+
+3 - 'examples/train_lora/llama3_lora_sft.yaml' 这个参数在命令行中传递后，通过一系列函数调用和参数解析，最终被用于训练过程。以下是详细的参数流动过程：
+
+命令行调用：
+
+当你运行 llamafactory-cli train examples/train_lora/llama3_lora_sft.yaml 时，sys.argv 列表包含命令行参数：['llamafactory-cli', 'train', 'examples/train_lora/llama3_lora_sft.yaml']。
+解析命令：
+
+在 main 函数中，sys.argv.pop(1) 移除并返回第二个元素 'train'，将其赋值给 command 变量。此时 sys.argv 列表变为：['llamafactory-cli', 'examples/train_lora/llama3_lora_sft.yaml']。
+处理 train 命令：
+
+main 函数中匹配到 elif command == Command.TRAIN: 分支，检查是否需要进行分布式训练。
+如果需要分布式训练，则使用 torchrun 命令进行分布式训练，并将 sys.argv[1:] 作为参数传递给启动脚本。
+如果不需要分布式训练，则调用 run_exp() 函数。
+调用 run_exp 函数：
+
+run_exp 函数会读取 sys.argv[1]，即配置文件路径 'examples/train_lora/llama3_lora_sft.yaml'。
+run_exp 函数调用 get_train_args(args)，其中 args 默认是 None。
+解析训练参数：
+
+get_train_args 函数调用 _parse_train_args(args)，传递 args 参数（默认为 None）。
+_parse_train_args 函数创建一个 HfArgumentParser 对象，并调用 _parse_args(parser, args)。
+解析 YAML 文件：
+
+_parse_args 函数检查 sys.argv 列表，如果只有一个参数且以 .yaml 或 .yml 结尾，则调用 parser.parse_yaml_file 方法解析 YAML 文件。
+解析后的参数被赋值给 model_args, data_args, training_args, finetuning_args, generating_args。
+利用解析后的参数：
+
+run_exp 函数根据 finetuning_args.stage 的值，调用相应的训练函数（如 run_sft）。
+这些训练函数会使用解析后的参数来初始化模型、数据集和训练设置，并开始训练。
+
+"""
 def main():
     command = sys.argv.pop(1) if len(sys.argv) != 1 else Command.HELP
     if command == Command.API:
@@ -108,11 +151,11 @@ def main():
             )
             sys.exit(process.returncode)
         else:
-            run_exp()
+            run_exp() # run_exp() 函数会读取 sys.argv[1]，即配置文件路径 llama3_lora_sft.yaml。
     elif command == Command.WEBDEMO:
         run_web_demo()
     elif command == Command.WEBUI:
-        run_web_ui()
+        run_web_ui() # 前端
     elif command == Command.VER:
         print(WELCOME)
     elif command == Command.HELP:

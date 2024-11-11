@@ -52,12 +52,22 @@ _EVAL_ARGS = [ModelArguments, DataArguments, EvaluationArguments, FinetuningArgu
 _EVAL_CLS = Tuple[ModelArguments, DataArguments, EvaluationArguments, FinetuningArguments]
 
 
+"""
+_parse_args 函数检查 sys.argv 列表，如果只有一个参数且以 .yaml 或 .yml 结尾，则调用 parser.parse_yaml_file 方法解析 YAML 文件。
+解析后的参数被赋值给 model_args, data_args, training_args, finetuning_args, generating_args。
+"""
 def _parse_args(parser: "HfArgumentParser", args: Optional[Dict[str, Any]] = None) -> Tuple[Any]:
     if args is not None:
         return parser.parse_dict(args)
 
-    if len(sys.argv) == 2 and (sys.argv[1].endswith(".yaml") or sys.argv[1].endswith(".yml")):
+    if len(sys.argv) == 2 and (sys.argv[1].endswith(".yaml") or sys.argv[1].endswith(".yml")): # 最终在这里使用了参数 'llama3_lora_sft.yaml'
         return parser.parse_yaml_file(os.path.abspath(sys.argv[1]))
+    """
+        _parse_args 函数检查 sys.argv 列表，如果只有一个参数且以 .yaml 或 .yml 结尾，则调用 parser.parse_yaml_file 方法解析 YAML 文件。
+        解析后的参数被赋值给 model_args, data_args, training_args, finetuning_args, generating_args。
+        至此，命令 llamafactory-cli train examples/train_lora/llama3_lora_sft.yaml 解析完毕！
+        !!!
+    """
 
     if len(sys.argv) == 2 and sys.argv[1].endswith(".json"):
         return parser.parse_json_file(os.path.abspath(sys.argv[1]))
@@ -144,7 +154,7 @@ def _check_extra_dependencies(
 
 def _parse_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
     parser = HfArgumentParser(_TRAIN_ARGS)
-    return _parse_args(parser, args)
+    return _parse_args(parser, args) # get_train_args 函数会调用 _parse_train_args 函数来解析参数
 
 
 def _parse_infer_args(args: Optional[Dict[str, Any]] = None) -> _INFER_CLS:
@@ -157,8 +167,9 @@ def _parse_eval_args(args: Optional[Dict[str, Any]] = None) -> _EVAL_CLS:
     return _parse_args(parser, args)
 
 
+# 由于 args 默认是 None，因此 get_train_args 函数会使用 None 作为参数。
 def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
-    model_args, data_args, training_args, finetuning_args, generating_args = _parse_train_args(args)
+    model_args, data_args, training_args, finetuning_args, generating_args = _parse_train_args(args) # get_train_args 函数会调用 _parse_train_args 函数来解析参数
 
     # Setup logging
     if training_args.should_log:

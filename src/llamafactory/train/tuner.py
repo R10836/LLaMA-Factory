@@ -39,10 +39,17 @@ if TYPE_CHECKING:
 
 logger = logging.get_logger(__name__)
 
+"""
+1 - 假设是单机，'examples/train_lora/llama3_lora_sft.yaml'这个参数流动到这里
 
+2 - 由于 args 默认是 None，因此 get_train_args 函数会使用 None 作为参数。
+
+3 - 函数本身不会直接读取 sys.argv[1]，但它调用的 get_train_args 函数会间接读取 sys.argv[1]。具体来说，get_train_args 函数会调用 _parse_train_args 函数，而 _parse_train_args 函数会调用 _parse_args 函数来解析命令行参数。
+
+"""
 def run_exp(args: Optional[Dict[str, Any]] = None, callbacks: List["TrainerCallback"] = []) -> None:
     callbacks.append(LogCallback())
-    model_args, data_args, training_args, finetuning_args, generating_args = get_train_args(args)
+    model_args, data_args, training_args, finetuning_args, generating_args = get_train_args(args) # get_train_args 函数会读取 sys.argv[1]，即配置文件路径 llama3_lora_sft.yaml。
 
     if finetuning_args.stage == "pt":
         run_pt(model_args, data_args, training_args, finetuning_args, callbacks)
